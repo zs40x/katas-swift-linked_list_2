@@ -2,36 +2,125 @@
 
 import Cocoa
 
-class Element<T> {
-    var Data: T;
+class Element<T: Equatable> {
+    var Item: T? = nil
     
-    init(data: T) {
-        Data = data;
+    var Next: Element<T>? = nil
+    var Previous: Element<T>? = nil
+    
+    init(item: T) {
+        self.Item = item
     }
 }
 
-class LinkedList<T> {
+class LinkedList<T: Equatable>  {
     
-    private var size: Int = 0
+    private var firstNode: Element<T>? = nil
+    private var lastNode: Element<T>? = nil
+    var Count: Int = 0
     
-    func Add<T>(item: T) {
-        self.size += 1
-    }
-    
-    func Delete(item: T) {
+    func Add(item: T) {
         
-    }
-    
-    func Find<T>(item: T) {
+        if( firstNode == nil ) {
+            firstNode = Element(item: item)
+            lastNode = firstNode
+        }
+        else {
+            self.lastNode?.Next = Element(item: item)
+            self.lastNode?.Next?.Previous = self.lastNode?
+            self.lastNode = self.lastNode?.Next
+        }
         
+        self.updateCount()
     }
     
-    func Size() -> Int {
-        return self.size;
+    func Append(values: T...) {
+        for value in values {
+            self.Add(value)
+        }
+    }
+    
+    func Remove(item: T) {
+        var currentNode: Element<T>? = self.firstNode
+        
+        while( currentNode != nil ) {
+            var currentItem: T = currentNode!.Item!
+            
+            if(currentItem == item) {
+                if( currentNode?.Previous? == nil ) {
+                    self.firstNode = currentNode?.Next
+                    self.firstNode?.Previous = nil
+                }
+                else {
+                    currentNode?.Previous?.Next = currentNode?.Next
+                    currentNode?.Next?.Previous = currentNode?.Previous
+                }
+            }
+            
+            currentNode = currentNode?.Next
+        }
+        
+        self.updateCount()
+    }
+    
+    private func updateCount() {
+        var counter: Int = 0
+        var currentNode: Element<T>? = firstNode
+        
+        while( currentNode != nil ) {
+            counter++
+            currentNode = currentNode?.Next
+        }
+        
+        self.Count = counter
+    }
+    
+    func getIterator() -> LinkedListIterator<T> {
+        return LinkedListIterator(lnkedList: self)
     }
 }
 
-// TC1: New list with 1 Item returns size 1
-let list = LinkedList<String>();
-list.Add("Hello World")
-assert(list.Size() == 1);
+class LinkedListIterator<T: Equatable> {
+    
+    var linkedList: LinkedList<T>?
+    var currentNode: Element<T>?
+    
+    init(lnkedList: LinkedList<T>) {
+        self.linkedList = lnkedList
+        self.currentNode = lnkedList.firstNode!
+    }
+    
+    func hasNext() -> Bool {
+        if( currentNode != nil ) {
+            return true
+        }
+        
+        return false
+    }
+    
+    func getNext() -> T {
+        var itemToReturn: T? = currentNode?.Item
+        currentNode = currentNode?.Next
+        return itemToReturn!
+    }
+}
+
+
+var testLinkedList = LinkedList<String>()
+testLinkedList.Add("Foo")
+testLinkedList.Add("Bar")
+testLinkedList.Append("Marmelade", "Nutella", "Wurst")
+testLinkedList.Count
+
+testLinkedList.Remove("Bar")
+testLinkedList.Remove("Foo")
+testLinkedList.Remove("Wurst")
+testLinkedList.Count
+
+var iterator = testLinkedList.getIterator()
+
+while( iterator.hasNext() ) {
+    println(iterator.getNext())
+}
+
+
